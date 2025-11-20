@@ -1,10 +1,172 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>My Website</title>
-  </head>
-  <body>
-    <h1>Hello, world!</h1>
-    <p>This is my personal website.</p>
-  </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Vibe</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000; /* Deep black background */
+        }
+        canvas {
+            display: block;
+        }
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: sans-serif;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">Move mouse to disrupt / Click to explode</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+        
+        // Vibe Settings
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 150 // The radius of influence
+        }
+
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        // Neon Palette
+        const colors = [
+            '#FF0055', // Neon Pink
+            '#00FF99', // Neon Green
+            '#00CCFF', // Cyan
+            '#FFDD00', // Electric Yellow
+            '#8800FF'  // Violet
+        ];
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                
+                // Glow Effect
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                
+                ctx.fill();
+                // Reset shadow for performance
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                // Boundary checks (bounce off walls)
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+
+                // Collision detection with mouse
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+
+                if (distance < mouse.radius) {
+                    // Physics: Push particles away from mouse
+                    if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
+                        this.x += 10;
+                    }
+                    if (mouse.x > this.x && this.x > this.size * 10) {
+                        this.x -= 10;
+                    }
+                    if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
+                        this.y += 10;
+                    }
+                    if (mouse.y > this.y && this.y > this.size * 10) {
+                        this.y -= 10;
+                    }
+                }
+
+                // Move particle
+                this.x += this.directionX;
+                this.y += this.directionY;
+
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000; // Density
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 3) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 2) - 1; // Speed between -1 and 1
+                let directionY = (Math.random() * 2) - 1;
+                let color = colors[Math.floor(Math.random() * colors.length)];
+
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // THIS is the secret sauce for trails:
+            // Instead of clearing the rect completely, we draw a semi-transparent black square
+            // This makes old frames fade out slowly.
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+            ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+        }
+
+        // Handle resize
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        })
+
+        // Explode on click
+        window.addEventListener('click', function() {
+            particlesArray.forEach(p => {
+                p.directionX = (Math.random() * 10) - 5;
+                p.directionY = (Math.random() * 10) - 5;
+            });
+        });
+
+        init();
+        animate();
+    </script>
+</body>
 </html>
