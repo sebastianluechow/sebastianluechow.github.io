@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jazz Voicing Wizard</title>
+    <!-- ABCJS Library für Noten & Audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
+    
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --accent: #d4af37; /* Gold for Jazz */
+            --text: #e0e0e0;
+            --dim: #666;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 3px;
+            border-bottom: 1px solid var(--accent);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
+            align-items: center;
+        }
+
+        select {
+            background: #333;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        button {
+            background: var(--accent);
+            color: black;
+            border: none;
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { transform: scale(1.05); }
+
+        /* --- VOICING DISPLAY --- */
+        .voicing-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .voicing-card {
+            background: white; /* White paper */
+            color: black;
+            padding: 20px;
+            border-radius: 8px;
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .note-text {
+            background: #eee;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .play-btn {
+            margin-top: 15px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+            padding: 8px 20px;
+        }
+        
+        /* Notenblatt SVG Styling */
+        svg { width: 100%; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Jazz Voicing Generator</h1>
+
+    <div class="controls">
+        <select id="rootSelect">
+            <option value="C">C</option>
+            <option value="Db">Db / C#</option>
+            <option value="D">D</option>
+            <option value="Eb">Eb</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="Gb">Gb / F#</option>
+            <option value="G">G</option>
+            <option value="Ab">Ab</option>
+            <option value="A">A</option>
+            <option value="Bb">Bb</option>
+            <option value="B">B</option>
+        </select>
+
+        <select id="qualitySelect">
+            <option value="maj7">Major 7 (9)</option>
+            <option value="m7">Minor 7 (9)</option>
+            <option value="7">Dominant 7 (13)</option>
+            <option value="7alt">Dom 7 Alt (#9 b13)</option>
+            <option value="m7b5">Min 7 b5 (11)</option>
+        </select>
+
+        <button id="genBtn">Generate</button>
+    </div>
+
+    <div class="voicing-container">
+        
+        <!-- TYPE A -->
+        <div class="voicing-card">
+            <div class="card-title">Type A</div>
+            <div class="card-desc">Rootless (3rd in Bass)</div>
+            <div id="paperA"></div>
+            <div class="note-text" id="textA">-</div>
+            <button class="play-btn" onclick="playAudio('A')">Play</button>
+        </div>
+
+        <!-- TYPE B -->
+        <div class="voicing-card">
+            <div class="card-title">Type B</div>
+            <div class="card-desc">Rootless (7th in Bass)</div>
+            <div id="paperB"></div>
+            <div class="note-text" id="textB">-</div>
+            <button class="play-btn" onclick="playAudio('B')">Play</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- JAZZ THEORY ENGINE ---
+        
+        // Chromatic Scale in ABC Notation format
+        // C=0, Db=1 ...
+        const CHROMATIC = ["C", "_D", "D", "_E", "E", "F", "^F", "G", "_A", "A", "_B", "B"];
+        
+        // Schöne Namen für die Text-Anzeige
+        const PRETTY_NOTES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+        // Mapping: Quality -> Intervals (relative to root)
+        const VOICINGS = {
+            "maj7": { 
+                // A: 3, 5, 7, 9
+                A: [4, 7, 11, 14], 
+                // B: 7, 9, 3, 5
+                B: [11, 14, 16, 19] 
+            },
+            "m7": {
+                // A: b3, 5, b7, 9
+                A: [3, 7, 10, 14],
+                B: [10, 14, 15, 19]
+            },
+            "7": {
+                // A: 3, 13, b7, 9 (Classic Evans)
+                A: [4, 9, 10, 14], // 9 here is actually 13 (A) relative to C. wait. 13 of C is A (9 semitones). 
+                // Let's recalculate semitones:
+                // 3rd = 4
+                // 13th = 21 (octave+9) or just 9 semitones from root? A is 9 semitones from C.
+                // b7 = 10
+                // 9 = 14
+                // Let's fix the Stack: 3, 13, b7, 9
+                A: [4, 10, 14, 21], // 3, b7, 9, 13 (Open spread) - Actually let's keep it close.
+                // Close position A: 3, 13, b7, 9 => 4, 9(actually 13 down), 10, 14? No.
+                // Standard Left Hand A: 3, 6(13), b7, 9 => 4, 9, 10, 14. Correct.
+                
+                // B: b7, 9, 3, 13
+                B: [10, 14, 16, 21] 
+            },
+            "7alt": {
+                // A: 3, b13, b7, #9
+                // 3=4, b13=8, b7=10, #9=15
+                A: [4, 8, 10, 15],
+                // B: b7, #9, 3, b13
+                B: [10, 15, 16, 20]
+            },
+            "m7b5": {
+                // A: b3, b5, b7, 11 (Locrian flavor)
+                A: [3, 6, 10, 17],
+                B: [10, 17, 15, 18] 
+            }
+        };
+
+        // Helper to get index of root
+        function getRootIndex(rootName) {
+            const map = { "C":0, "Db":1, "D":2, "Eb":3, "E":4, "F":5, "Gb":6, "G":7, "Ab":8, "A":9, "Bb":10, "B":11 };
+            return map[rootName];
+        }
+
+        // Helper to convert MIDI pitch to ABC string
+        // Middle C (MIDI 60) is "C" in ABC. 
+        // C3 (MIDI 48) is "C,"
+        // C4 (MIDI 60) is "C"
+        // C5 (MIDI 72) is "c"
+        function midiToAbc(midi) {
+            const noteIndex = midi % 12;
+            const octave = Math.floor(midi / 12) - 1; // Adjust logic
+            
+            let noteName = CHROMATIC[noteIndex];
+            
+            // ABC Octaves:
+            // C, (octave 3 in logic below)
+            // C  (octave 4)
+            // c  (octave 5)
+            // c' (octave 6)
+            
+            // Let's assume base calculation is relative to C4 (60)
+            // Our calculation logic:
+            // Root C = 48 (C3) roughly for Left Hand
+            
+            // Simple mapping based on range
+            if (midi < 48) return noteName + ",,"; // Very low
+            if (midi < 60) return noteName + ",";  // Low (C3-B3)
+            if (midi < 72) return noteName;        // Middle (C4-B4)
+            if (midi < 84) return noteName.toLowerCase(); // High (C5-B5)
+            return noteName.toLowerCase() + "'";   // Very High
+        }
+
+        function midiToPretty(midi) {
+            return PRETTY_NOTES[midi % 12];
+        }
+
+        // Store current ABC strings for audio
+        let currentAbcA = "";
+        let currentAbcB = "";
+
+        function generate() {
+            const rootStr = document.getElementById('rootSelect').value;
+            const quality = document.getElementById('qualitySelect').value;
+            const rootIdx = getRootIndex(rootStr);
+            
+            // Determine base MIDI pitch for the root
+            // We want the voicings to sit around Middle C (60)
+            // So the root should be around C3 (48)
+            let baseRoot = 48 + rootIdx;
+            
+            const intervals = VOICINGS[quality];
+            
+            // --- BUILD TYPE A ---
+            let notesA = intervals.A.map(i => baseRoot + i);
+            // If it gets too low (muddy), bump octave
+            if(notesA[0] < 45) notesA = notesA.map(n => n + 12);
+            
+            // Construct ABC Chord String: [Note1 Note2 ...]
+            let abcNotesA = notesA.map(midiToAbc).join("");
+            let prettyA = notesA.map(midiToPretty).join(" - ");
+            
+            // Create full ABC source
+            currentAbcA = `X:1\nM:4/4\nL:1/1\nK:C\n[${abcNotesA}] |]`;
+            
+            // Render
+            ABCJS.renderAbc("paperA", currentAbcA, { scale: 1.5, staffwidth: 200 });
+            document.getElementById("textA").innerText = prettyA;
+
+
+            // --- BUILD TYPE B ---
+            let notesB = intervals.B.map(i => baseRoot + i);
+            // Type B usually sits slightly lower or same, adjust to stay in staff
+            if(notesB[0] < 45) notesB = notesB.map(n => n + 12);
+
+            let abcNotesB = notesB.map(midiToAbc).join("");
+            let prettyB = notesB.map(midiToPretty).join(" - ");
+            
+            currentAbcB = `X:1\nM:4/4\nL:1/1\nK:C\n[${abcNotesB}] |]`;
+            
+            ABCJS.renderAbc("paperB", currentAbcB, { scale: 1.5, staffwidth: 200 });
+            document.getElementById("textB").innerText = prettyB;
+        }
+
+        // --- AUDIO LOGIC ---
+        function playAudio(type) {
+            const abcString = (type === 'A') ? currentAbcA : currentAbcB;
+            if (!abcString) return;
+
+            if (ABCJS.synth.supportsAudio()) {
+                const visualObj = ABCJS.renderAbc("paper" + type, abcString, { scale: 1.5, staffwidth: 200 })[0];
+                const synth = new ABCJS.synth.CreateSynth();
+                
+                synth.init({ visualObj: visualObj }).then(() => {
+                    synth.prime().then(() => {
+                        synth.start();
+                    });
+                });
+            }
+        }
+
+        // Init
+        document.getElementById('genBtn').addEventListener('click', generate);
+        generate(); // Run once on load
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive | Distribution Lab</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="physics.css">
+
+    <style>
+        /* --- CRITICAL CANVAS FIX --- */
+        canvas#statCanvas {
+            position: static;
+            width: 100%;
+            height: 100%;
+            opacity: 1;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        /* --- LAYOUT --- */
+        .lab-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            height: 700px;
+        }
+
+        .graph-window {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* CONTROLS */
+        .control-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .dist-group {
+            border-left: 2px solid var(--dim);
+            padding-left: 15px;
+        }
+
+        .dist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dist-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        /* Specific Colors for Borders/Toggles */
+        .group-binomial { border-color: var(--accent); }
+        .group-poisson { border-color: #ff0055; }
+        .group-gaussian { border-color: #ffcc00; }
+
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--dim);
+            margin-bottom: 5px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--dim);
+            cursor: pointer;
+        }
+        
+        /* Slider Colors */
+        .group-binomial input[type=range] { accent-color: var(--accent); }
+        .group-poisson input[type=range] { accent-color: #ff0055; }
+        .group-gaussian input[type=range] { accent-color: #ffcc00; }
+
+        /* Toggle Switch */
+        .toggle-container { display: flex; align-items: center; gap: 10px; }
+        .toggle-chk { transform: scale(1.2); cursor: pointer; }
+
+        .math-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--dim);
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .btn-match {
+            background: transparent;
+            border: 1px solid #ffcc00;
+            color: #ffcc00;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .btn-match:hover { background: rgba(255, 204, 0, 0.1); }
+
+        @media (max-width: 900px) {
+            .lab-container { grid-template-columns: 1fr; height: auto; }
+            .graph-window { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <nav>
+        <a href="../index.html" class="logo">S<span>.</span>L<span>.</span></a>
+        <div class="nav-right">
+            <a href="../photography.html">OBSERVATIONS</a>
+            <a href="../jazz.html">WOODSHED</a>
+            <a href="../physics.html" class="nav-active">ARCHIVE</a>
+            
+            <button id="theme-toggle" style="background:none; border:none; color:var(--dim); font-family:inherit; cursor:pointer; margin-left:20px; font-size:0.85rem; transition:0.2s;">LIGHT</button>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Distribution Lab</h1>
+        <p class="subtitle">
+            Visualizing the limits of statistics. Compare Discrete (Binomial, Poisson) vs Continuous (Gaussian) distributions.
+        </p>
+    </header>
+
+    <div class="container">
+        
+        <div class="lab-container">
+            
+            <!-- LEFT: PLOT -->
+            <div class="graph-window">
+                <canvas id="statCanvas"></canvas>
+            </div>
+
+            <!-- RIGHT: CONTROLS -->
+            <div class="control-panel">
+                
+                <!-- BINOMIAL -->
+                <div class="dist-group group-binomial">
+                    <div class="dist-header">
+                        <span class="dist-title" style="color:var(--accent)">Binomial</span>
+                        <input type="checkbox" id="showBin" checked class="toggle-chk">
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="label-row"><span>Trials (N)</span> <span id="valN">20</span></div>
+                        <input type="range" id="inpN" min="1" max="100" value="20">
+                    </div>
+                    <div class="control-row">
+                        <div class="label-row"><span>Prob (p)</span> <span id="valP">0.5</span></div>
+                        <input type="range" id="inpP" min="0.01" max="0.99" step="0.01" value="0.5">
+                    </div>
+                    <div class="math-info">Mean = np, Var = np(1-p)</div>
+                </div>
+
+                <!-- POISSON -->
+                <div class="dist-group group-poisson">
+                    <div class="dist-header">
+                        <span class="dist-title" style="color:#ff0055">Poisson</span>
+                        <input type="checkbox" id="showPoi" class="toggle-chk">
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="label-row"><span>Rate (λ)</span> <span id="valLam">5</span></div>
+                        <input type="range" id="inpLam" min="0.1" max="50" step="0.1" value="5">
+                    </div>
+                    <div class="math-info">Mean = λ, Var = λ</div>
+                </div>
+
+                <!-- GAUSSIAN -->
+                <div class="dist-group group-gaussian">
+                    <div class="dist-header">
+                        <span class="dist-title" style="color:#ffcc00">Gaussian</span>
+                        <input type="checkbox" id="showGau" class="toggle-chk">
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="label-row"><span>Mean (μ)</span> <span id="valMu">10</span></div>
+                        <input type="range" id="inpMu" min="0" max="100" step="0.1" value="10">
+                    </div>
+                    <div class="control-row">
+                        <div class="label-row"><span>Std Dev (σ)</span> <span id="valSig">2</span></div>
+                        <input type="range" id="inpSig" min="0.1" max="20" step="0.1" value="2">
+                    </div>
+                    
+                    <button class="btn-match" onclick="matchBinomial()">AUTO-FIT TO BINOMIAL</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <footer>
+        [SYSTEM STATUS: NORMALIZED] &middot; © 2023 Sebastian Lüchow
+    </footer>
+
+    <script>
+        // --- THEME LOGIC ---
+        const themeBtn = document.getElementById('theme-toggle');
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            themeBtn.innerText = "DARK";
+        }
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeBtn.innerText = isLight ? "DARK" : "LIGHT";
+            updatePlot();
+        });
+
+        // --- STATS ENGINE ---
+        const canvas = document.getElementById('statCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Data state
+        let params = {
+            bin: { n: 20, p: 0.5, show: true },
+            poi: { lam: 5, show: false },
+            gau: { mu: 10, sig: 2, show: false }
+        };
+
+        // Math Helpers
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        function nCr(n, r) {
+            if (r < 0 || r > n) return 0;
+            // For large numbers, use approx or simplified loop to avoid infinity
+            if (n > 170) return 0; // JS Infinity limit check roughly
+            return factorial(n) / (factorial(r) * factorial(n - r));
+        }
+
+        function binomialPMF(k, n, p) {
+            return nCr(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+        }
+
+        function poissonPMF(k, lam) {
+            return (Math.pow(lam, k) * Math.exp(-lam)) / factorial(k);
+        }
+
+        function gaussianPDF(x, mu, sig) {
+            return (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sig, 2));
+        }
+
+        // Match Gaussian to Binomial (CLT Demo)
+        function matchBinomial() {
+            const mean = params.bin.n * params.bin.p;
+            const variance = params.bin.n * params.bin.p * (1 - params.bin.p);
+            const sigma = Math.sqrt(variance);
+
+            // Update State
+            params.gau.mu = mean;
+            params.gau.sig = sigma;
+            params.gau.show = true; // Auto turn on
+
+            // Update UI
+            document.getElementById('inpMu').value = mean;
+            document.getElementById('valMu').innerText = mean.toFixed(2);
+            document.getElementById('inpSig').value = sigma;
+            document.getElementById('valSig').innerText = sigma.toFixed(2);
+            document.getElementById('showGau').checked = true;
+
+            updatePlot();
+        }
+
+        // --- PLOTTING ---
+        function updatePlot() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const isLight = document.body.classList.contains('light-mode');
+
+            // Colors
+            const cBin = isLight ? '#008c9e' : '#00f3ff';
+            const cPoi = '#ff0055';
+            const cGau = isLight ? '#b8860b' : '#ffcc00';
+            const cBg = isLight ? '#f8f9fa' : '#0a0a0a';
+            const cGrid = isLight ? '#ddd' : '#222';
+            const cText = isLight ? '#333' : '#888';
+
+            ctx.fillStyle = cBg;
+            ctx.fillRect(0, 0, width, height);
+
+            // Determine Ranges
+            // X Axis: 0 to N (Binomial) or 2*Lambda (Poisson) or Mu + 4Sig (Gaussian)
+            let maxX = params.bin.n;
+            if (params.poi.show) maxX = Math.max(maxX, params.poi.lam * 2.5);
+            if (params.gau.show) maxX = Math.max(maxX, params.gau.mu + 4 * params.gau.sig);
+            maxX = Math.ceil(maxX + 2); // Padding
+
+            // Determine Y Max for scaling
+            // Binomial peak is roughly at mean
+            let maxY = 0;
+            if(params.bin.show) {
+                let mode = Math.floor((params.bin.n + 1) * params.bin.p);
+                maxY = Math.max(maxY, binomialPMF(mode, params.bin.n, params.bin.p));
+            }
+            if(params.poi.show) {
+                let mode = Math.floor(params.poi.lam);
+                maxY = Math.max(maxY, poissonPMF(mode, params.poi.lam));
+            }
+            if(params.gau.show) {
+                maxY = Math.max(maxY, gaussianPDF(params.gau.mu, params.gau.mu, params.gau.sig));
+            }
+            if (maxY === 0) maxY = 1; // Default
+
+            const padding = 40;
+            const graphW = width - 2 * padding;
+            const graphH = height - 2 * padding;
+
+            // Map functions
+            const mapX = (val) => padding + (val / maxX) * graphW;
+            const mapY = (prob) => (height - padding) - (prob / (maxY * 1.1)) * graphH;
+
+            // Draw Axes
+            ctx.strokeStyle = cGrid;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding); // Y axis
+            ctx.lineTo(width - padding, height - padding); // X axis
+            ctx.stroke();
+
+            // 1. Draw Binomial (Discrete Bars)
+            if (params.bin.show) {
+                ctx.fillStyle = cBin;
+                const barW = (graphW / maxX) * 0.4; // Bar width
+                
+                for (let k = 0; k <= params.bin.n; k++) {
+                    const prob = binomialPMF(k, params.bin.n, params.bin.p);
+                    const x = mapX(k);
+                    const y = mapY(prob);
+                    const h = (height - padding) - y;
+                    
+                    ctx.fillRect(x - barW/2, y, barW, h);
+                }
+            }
+
+            // 2. Draw Poisson (Discrete Dots/Lines)
+            if (params.poi.show) {
+                ctx.strokeStyle = cPoi;
+                ctx.fillStyle = cPoi;
+                const range = Math.min(100, Math.ceil(params.poi.lam * 3)); // Dont draw infinite
+                
+                for (let k = 0; k <= range; k++) {
+                    const prob = poissonPMF(k, params.poi.lam);
+                    const x = mapX(k);
+                    const y = mapY(prob);
+                    
+                    // Draw stick
+                    ctx.beginPath();
+                    ctx.moveTo(x, height - padding);
+                    ctx.lineTo(x, y);
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Draw circle top
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+
+            // 3. Draw Gaussian (Continuous Line)
+            if (params.gau.show) {
+                ctx.strokeStyle = cGau;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                const steps = 200;
+                for (let i = 0; i <= steps; i++) {
+                    const xVal = (i / steps) * maxX;
+                    const prob = gaussianPDF(xVal, params.gau.mu, params.gau.sig);
+                    const x = mapX(xVal);
+                    const y = mapY(prob);
+                    
+                    if (i===0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            updatePlot();
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100);
+
+        // --- LISTENERS ---
+        
+        // Binomial
+        document.getElementById('inpN').addEventListener('input', (e) => {
+            params.bin.n = +e.target.value;
+            document.getElementById('valN').innerText = params.bin.n;
+            updatePlot();
+        });
+        document.getElementById('inpP').addEventListener('input', (e) => {
+            params.bin.p = +e.target.value;
+            document.getElementById('valP').innerText = params.bin.p;
+            updatePlot();
+        });
+        document.getElementById('showBin').addEventListener('change', (e) => {
+            params.bin.show = e.target.checked;
+            updatePlot();
+        });
+
+        // Poisson
+        document.getElementById('inpLam').addEventListener('input', (e) => {
+            params.poi.lam = +e.target.value;
+            document.getElementById('valLam').innerText = params.poi.lam;
+            updatePlot();
+        });
+        document.getElementById('showPoi').addEventListener('change', (e) => {
+            params.poi.show = e.target.checked;
+            updatePlot();
+        });
+
+        // Gaussian
+        document.getElementById('inpMu').addEventListener('input', (e) => {
+            params.gau.mu = +e.target.value;
+            document.getElementById('valMu').innerText = params.gau.mu;
+            updatePlot();
+        });
+        document.getElementById('inpSig').addEventListener('input', (e) => {
+            params.gau.sig = +e.target.value;
+            document.getElementById('valSig').innerText = params.gau.sig;
+            updatePlot();
+        });
+        document.getElementById('showGau').addEventListener('change', (e) => {
+            params.gau.show = e.target.checked;
+            updatePlot();
+        });
+
+    </script>
+</body>
+</html>

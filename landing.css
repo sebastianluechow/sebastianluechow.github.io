@@ -1,0 +1,111 @@
+/* =========================================
+   THE NEXUS // LANDING PAGE
+   ========================================= */
+
+:root {
+    --bg: #050505;
+    --text: #ffffff;
+    --dim: #666;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden; /* No scrolling on landing */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- BACKGROUND CANVAS --- */
+canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+}
+
+/* --- MAIN CONTENT --- */
+.container {
+    text-align: center;
+    z-index: 10;
+    mix-blend-mode: difference; /* Cool effect over particles */
+}
+
+.name {
+    font-size: 5rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 10px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 60px;
+    letter-spacing: 2px;
+}
+
+/* --- NAVIGATION PORTALS --- */
+.nav-grid {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+}
+
+.portal {
+    text-decoration: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    border: 1px solid transparent;
+    transition: 0.3s;
+    position: relative;
+    text-transform: uppercase;
+}
+
+/* Hover Line Animation */
+.portal::after {
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 1px;
+    bottom: 0;
+    left: 50%;
+    background: #fff;
+    transition: 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.portal:hover::after { width: 100%; }
+
+/* Specific Hover Colors (Subtle hint at what's inside) */
+.portal[data-type="physics"]:hover { color: #00f3ff; }
+.portal[data-type="jazz"]:hover { color: #cc3300; }
+.portal[data-type="photo"]:hover { color: #aaa; }
+
+/* --- FOOTER --- */
+.footer {
+    position: fixed;
+    bottom: 30px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #444;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .name { font-size: 3rem; }
+    .nav-grid { flex-direction: column; gap: 20px; }
+}

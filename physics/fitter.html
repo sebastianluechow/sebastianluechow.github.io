@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive | Fit Master</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Main Physics Styles -->
+<link rel="stylesheet" href="physics.css">
+
+<style>
+    /* --- CRITICAL FIX: Override Global Canvas Styles --- */
+    /* physics.css tries to make all canvases full-screen backgrounds. 
+       We must reset this for the plotting canvas. */
+    canvas#plotCanvas {
+        position: static; /* Puts it back inside the box */
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        z-index: auto;
+        pointer-events: auto;
+    }
+
+    /* --- TOOL STYLES --- */
+    .fit-container {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 40px;
+    }
+
+    .data-input-area {
+        display: flex;
+        gap: 20px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 300px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-family: 'JetBrains Mono', monospace;
+        padding: 15px;
+        resize: none;
+        border-radius: 4px;
+        transition: 0.3s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+
+    .plot-area {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        position: relative;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden; /* Keeps the canvas inside */
+    }
+
+    .stats-panel {
+        margin-top: 30px;
+        background: var(--hover-bg);
+        border: 1px solid var(--border);
+        padding: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        display: none;
+        border-radius: 4px;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .stat-label { color: var(--dim); }
+    .stat-val { color: var(--accent); font-weight: bold; }
+
+    .latex-box {
+        background: var(--bg);
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: var(--text);
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid var(--border);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .latex-box:hover { border-color: var(--accent); }
+
+    button.action-btn {
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        padding: 15px;
+        width: 100%;
+        font-weight: bold;
+        font-family: 'JetBrains Mono', monospace;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: 0.2s;
+        border-radius: 4px;
+    }
+    button.action-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    @media (max-width: 900px) {
+        .fit-container { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+
+<nav>
+    <a href="../index.html" class="logo">S<span>.</span>L<span>.</span></a>
+    <div class="nav-right">
+        <a href="../photography.html">OBSERVATIONS</a>
+        <a href="../jazz.html">WOODSHED</a>
+        <a href="../physics.html" class="nav-active">ARCHIVE</a>
+        
+        <button id="theme-toggle" style="background:none; border:none; color:var(--dim); font-family:inherit; cursor:pointer; margin-left:20px; font-size:0.85rem; transition:0.2s;">LIGHT</button>
+    </div>
+</nav>
+
+<header>
+    <h1>Linear Regression</h1>
+    <p class="subtitle">
+        Least Squares Fit (y=mx+c) with automatic error calculation and plotting.
+    </p>
+</header>
+
+<div class="container">
+    
+    <div class="fit-container">
+        
+        <!-- LEFT: INPUT -->
+        <div>
+            <label style="color:var(--dim); font-size:0.8rem; display:block; margin-bottom:10px;">DATA INPUT (COPY/PASTE)</label>
+            <div class="data-input-area">
+                <div>
+                    <span style="color:var(--accent); font-size:0.8rem;">X Values</span>
+                    <textarea id="xData" placeholder="1.0&#10;2.0&#10;3.0&#10;..."></textarea>
+                </div>
+                <div>
+                    <span style="color:var(--accent); font-size:0.8rem;">Y Values</span>
+                    <textarea id="yData" placeholder="5.1&#10;7.2&#10;8.9&#10;..."></textarea>
+                </div>
+            </div>
+            <button class="action-btn" onclick="calculateFit()">CALCULATE FIT</button>
+        </div>
+
+        <!-- RIGHT: PLOT -->
+        <div>
+            <label style="color:var(--dim); font-size:0.8rem; display:block; margin-bottom:10px;">VISUALIZATION</label>
+            <div class="plot-area">
+                <canvas id="plotCanvas"></canvas>
+            </div>
+
+            <div id="statsPanel" class="stats-panel">
+                <div class="stat-row">
+                    <span class="stat-label">Slope (m)</span>
+                    <span class="stat-val" id="resM"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Intercept (c)</span>
+                    <span class="stat-val" id="resC"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Correlation (R²)</span>
+                    <span class="stat-val" id="resR2"></span>
+                </div>
+
+                <div class="latex-box" id="latexOutput" onclick="copyLatex()" title="Click to Copy">
+                    <!-- LaTeX string goes here -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    [SYSTEM STATUS: OPTIMAL] &middot; © 2025 Sebastian Lüchow
+</footer>
+
+<script>
+    // --- THEME LOGIC ---
+    const themeBtn = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        themeBtn.innerText = "DARK";
+    }
+
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        themeBtn.innerText = isLight ? "DARK" : "LIGHT";
+        
+        // Redraw to update colors if data exists
+        if(document.getElementById('resM').innerText !== "") {
+            calculateFit();
+        }
+    });
+
+    // --- CALCULATION ---
+    function calculateFit() {
+        const xRaw = document.getElementById('xData').value.trim().split('\n');
+        const yRaw = document.getElementById('yData').value.trim().split('\n');
+
+        let x = [], y = [];
+        
+        for(let i=0; i<xRaw.length; i++) {
+            // Handle european comma decimals
+            let valX = parseFloat(xRaw[i].replace(',', '.')); 
+            let valY = parseFloat(yRaw[i].replace(',', '.'));
+            if (!isNaN(valX) && !isNaN(valY)) {
+                x.push(valX);
+                y.push(valY);
+            }
+        }
+
+        if (x.length < 2) {
+            alert("Please enter at least 2 data points.");
+            return;
+        }
+
+        // Least Squares
+        const n = x.length;
+        const sumX = x.reduce((a, b) => a + b, 0);
+        const sumY = y.reduce((a, b) => a + b, 0);
+        const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+        const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
+        const sumYY = y.reduce((sum, yi) => sum + yi * yi, 0);
+
+        const denominator = (n * sumXX - sumX * sumX);
+        if (denominator === 0) { alert("Vertical line detected."); return; }
+
+        const m = (n * sumXY - sumX * sumY) / denominator;
+        const c = (sumY - m * sumX) / n;
+
+        // R^2
+        const rNumerator = (n * sumXY - sumX * sumY);
+        const rDenominator = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
+        const r2 = Math.pow(rNumerator / rDenominator, 2);
+
+        // Errors
+        let ssr = 0;
+        for(let i=0; i<n; i++) {
+            const fittedY = m * x[i] + c;
+            ssr += Math.pow(y[i] - fittedY, 2);
+        }
+        const s_yx = Math.sqrt(ssr / (n - 2)); 
+        const sigma_m = s_yx * Math.sqrt(n / denominator);
+        const sigma_c = s_yx * Math.sqrt(sumXX / denominator);
+
+        // UI Updates
+        document.getElementById('statsPanel').style.display = 'block';
+        const f = (num) => num.toPrecision(4);
+        
+        document.getElementById('resM').innerHTML = `${f(m)} <span style="font-size:0.7em; opacity:0.7;">± ${f(sigma_m)}</span>`;
+        document.getElementById('resC').innerHTML = `${f(c)} <span style="font-size:0.7em; opacity:0.7;">± ${f(sigma_c)}</span>`;
+        document.getElementById('resR2').innerText = r2.toFixed(4);
+
+        const latexStr = `y = (${f(m)} \\pm ${f(sigma_m)}) x + (${f(c)} \\pm ${f(sigma_c)})`;
+        document.getElementById('latexOutput').innerText = latexStr;
+
+        drawPlot(x, y, m, c);
+    }
+
+    function drawPlot(xData, yData, m, c) {
+        const canvas = document.getElementById('plotCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // High DPI scaling
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        
+        if(rect.width === 0) return;
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        const padding = 40;
+
+        // Determine colors
+        const isLight = document.body.classList.contains('light-mode');
+        // Use explicit colors to ensure visibility against the fill
+        const colorBg = isLight ? '#f8f9fa' : '#0a0a0a'; 
+        const colorAxis = isLight ? '#333' : '#666';
+        const colorDot = isLight ? '#008c9e' : '#00f3ff';
+        const colorLine = isLight ? '#d64515' : '#ff0055';
+
+        // 1. Force Fill Background (To hide any global background interference)
+        ctx.fillStyle = colorBg;
+        ctx.fillRect(0, 0, w, h);
+
+        // Ranges
+        const xMin = Math.min(...xData);
+        const xMax = Math.max(...xData);
+        const yMin = Math.min(...yData);
+        const yMax = Math.max(...yData);
+
+        const xRange = xMax - xMin || 1;
+        const yRange = yMax - yMin || 1;
+
+        const mapX = (val) => padding + ((val - xMin) / xRange) * (w - 2 * padding);
+        const mapY = (val) => h - padding - ((val - yMin) / yRange) * (h - 2 * padding);
+
+        // 2. Draw Axes
+        ctx.strokeStyle = colorAxis;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, h - padding);
+        ctx.lineTo(w - padding, h - padding);
+        ctx.stroke();
+
+        // 3. Draw Points
+        ctx.fillStyle = colorDot;
+        xData.forEach((x, i) => {
+            const px = mapX(x);
+            const py = mapY(yData[i]);
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 4. Draw Line
+        const startX = xMin;
+        const startY = m * startX + c;
+        const endX = xMax;
+        const endY = m * endX + c;
+
+        ctx.strokeStyle = colorLine;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(startX), mapY(startY));
+        ctx.lineTo(mapX(endX), mapY(endY));
+        ctx.stroke();
+    }
+
+    function copyLatex() {
+        const text = document.getElementById('latexOutput').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied to clipboard");
+        });
+    }
+</script>
+</body>
+</html>

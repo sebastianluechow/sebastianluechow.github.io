@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Propagation Calculator</title>
+    
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- LIBRARIES -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Calculus.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f1115;
+            --surface: #161b22;
+            --surface-hover: #1f2630;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --accent-dim: rgba(88, 166, 255, 0.15);
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --success: #238636;
+            --error: #f85149;
+            
+            --font-ui: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .app-wrapper {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            gap: 24px;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-main);
+        }
+        .badge {
+            font-size: 0.75rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+        }
+
+        /* CARDS */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+        .panel:focus-within {
+            border-color: #58a6ff;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        label.section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* FORMULA INPUT */
+        .input-group { position: relative; }
+        
+        input.formula-bar {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            padding: 16px;
+            border-radius: 6px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        input.formula-bar:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        /* VARIABLE GRID */
+        .vars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .var-card {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .var-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .var-symbol {
+            font-family: var(--font-mono);
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        /* Custom Checkbox */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .toggle-text { font-size: 0.8rem; color: var(--text-muted); }
+        
+        /* NUMERIC INPUTS */
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .num-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+        .num-input-wrapper span {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+        input.num-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 8px 8px 24px; /* padding-left for the symbol */
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+        input.num-input:focus { outline: none; border-color: var(--accent); }
+        input.num-input:disabled { opacity: 0.5; cursor: not-allowed; border-color: transparent; }
+        
+        /* Error State */
+        input.error { border-color: var(--error) !important; }
+
+        /* RESULTS */
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .latex-display {
+            overflow-x: auto;
+            padding: 10px 0;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .numeric-display {
+            background: rgba(35, 134, 54, 0.1); /* Green tint */
+            border: 1px solid rgba(35, 134, 54, 0.3);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .final-value {
+            font-family: var(--font-mono);
+            font-size: 1.8rem;
+            color: #3fb950;
+            margin-bottom: 5px;
+        }
+        .final-meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* UTILS */
+        .btn-icon {
+            background: none; border: 1px solid var(--border); color: var(--text-muted);
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: var(--surface-hover); color: var(--text-main); }
+        .hidden { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <header>
+            <h1>Error Propagation</h1>
+            <span class="badge">v2.0</span>
+        </header>
+
+        <!-- FORMULA SECTION -->
+        <div class="panel">
+            <div class="panel-header">
+                <label class="section-title">Function f(x, y, ...)</label>
+            </div>
+            <div class="input-group">
+                <input type="text" id="formulaInput" class="formula-bar" value="4 * pi^2 * L / T^2" spellcheck="false">
+            </div>
+        </div>
+
+        <!-- VARIABLES SECTION -->
+        <div class="panel hidden" id="configPanel">
+            <div class="panel-header">
+                <label class="section-title">Variables & Uncertainties</label>
+            </div>
+            <div id="variablesGrid" class="vars-grid"></div>
+        </div>
+
+        <!-- OUTPUT SECTION -->
+        <div class="panel hidden" id="outputPanel">
+            <div class="panel-header">
+                <label class="section-title">Derived Formula</label>
+                <button class="btn-icon" onclick="copyLatex()">Copy LaTeX</button>
+            </div>
+            <div id="latexOutput" class="latex-display"></div>
+        </div>
+
+        <!-- NUMERIC RESULT -->
+        <div class="numeric-display hidden" id="resultPanel">
+            <div id="finalValue" class="final-value">--</div>
+            <div id="finalMeta" class="final-meta">waiting for input...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let detectedVars = [];
+        let formulaStr = "";
+        let inputTimeout = null;
+
+        const formulaInput = document.getElementById('formulaInput');
+        
+        // --- EVENT LISTENERS ---
+        
+        // Debounce the formula analysis (wait 500ms after typing stops)
+        formulaInput.addEventListener('input', (e) => {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(() => {
+                analyzeFormula(e.target.value);
+            }, 600);
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            analyzeFormula(formulaInput.value);
+        });
+
+        // --- LOGIC ---
+
+        function analyzeFormula(inputFormula) {
+            formulaStr = inputFormula;
+            const grid = document.getElementById('variablesGrid');
+            const configPanel = document.getElementById('configPanel');
+            const outputPanel = document.getElementById('outputPanel');
+            const resultPanel = document.getElementById('resultPanel');
+
+            try {
+                // Remove visual error states
+                formulaInput.classList.remove('error');
+
+                // Detect Variables using Nerdamer
+                const rawVars = nerdamer(formulaStr).variables();
+                const newVars = rawVars.filter(v => v !== 'pi' && v !== 'e').sort();
+
+                // If vars changed, rebuild UI. If same, just keep logic running.
+                // Simple approach: Always rebuild grid if list length/content differs
+                const varsChanged = JSON.stringify(newVars) !== JSON.stringify(detectedVars);
+
+                if (newVars.length > 0) {
+                    detectedVars = newVars;
+                    if (varsChanged) rebuildVariableGrid();
+                    
+                    configPanel.classList.remove('hidden');
+                    outputPanel.classList.remove('hidden');
+                    resultPanel.classList.remove('hidden');
+                    
+                    updateCalculations();
+                } else {
+                    configPanel.classList.add('hidden');
+                    outputPanel.classList.add('hidden');
+                    resultPanel.classList.add('hidden');
+                }
+
+            } catch (e) {
+                // Visual feedback for syntax error
+                formulaInput.classList.add('error');
+            }
+        }
+
+        function rebuildVariableGrid() {
+            const grid = document.getElementById('variablesGrid');
+            grid.innerHTML = "";
+
+            detectedVars.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'var-card';
+                div.innerHTML = `
+                    <div class="var-header">
+                        <span class="var-symbol">${v}</span>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="check_${v}" checked onchange="updateCalculations()">
+                            <span class="toggle-text">Has Error</span>
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <div class="num-input-wrapper">
+                            <span>=</span>
+                            <input type="number" class="num-input" id="val_${v}" placeholder="Value" oninput="updateCalculations()">
+                        </div>
+                        <div class="num-input-wrapper">
+                            <span>±</span>
+                            <input type="number" class="num-input" id="err_${v}" placeholder="Err" oninput="updateCalculations()">
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function updateCalculations() {
+            try {
+                // 1. Calculate Formula String for MathJax
+                let latexParts = [];
+                let scope = {};
+                let varianceSum = 0;
+                let allInputsValid = true;
+
+                // Loop through variables for both LaTeX and Numeric
+                detectedVars.forEach(v => {
+                    const checkEl = document.getElementById(`check_${v}`);
+                    const valEl = document.getElementById(`val_${v}`);
+                    const errEl = document.getElementById(`err_${v}`);
+                    
+                    if (!checkEl) return;
+
+                    const isChecked = checkEl.checked;
+                    
+                    // UI Management
+                    errEl.disabled = !isChecked;
+                    if (!isChecked) { errEl.value = ""; }
+
+                    // Numeric Collection
+                    const val = parseFloat(valEl.value);
+                    const err = parseFloat(errEl.value);
+
+                    if (isNaN(val)) allInputsValid = false;
+                    scope[v] = isNaN(val) ? 1 : val; // Default to 1 for partial diff evaluation if empty
+
+                    // Math Logic
+                    if (isChecked) {
+                        // Symbolic differentiation
+                        const diff = nerdamer.diff(formulaStr, v);
+                        const partialVal = parseFloat(diff.evaluate(scope).text());
+
+                        // LaTeX Building
+                        const partialTex = diff.toTeX();
+                        latexParts.push(`\\left( (${partialTex}) \\cdot \\sigma_{${v}} \\right)^2`);
+
+                        // Numeric Error Accumulation
+                        if (!isNaN(err)) {
+                            varianceSum += Math.pow(partialVal * err, 2);
+                        } else {
+                            allInputsValid = false; 
+                        }
+                    }
+                });
+
+                // 2. Render LaTeX
+                const latexString = latexParts.length > 0 
+                    ? "\\sigma_f = \\sqrt{ " + latexParts.join(" + ") + " }"
+                    : "\\sigma_f = 0";
+                
+                const latexContainer = document.getElementById('latexOutput');
+                latexContainer.innerHTML = `\\[ ${latexString} \\]`;
+                MathJax.typesetPromise([latexContainer]);
+
+                // 3. Render Numeric Result
+                if (allInputsValid) {
+                    const result = parseFloat(nerdamer(formulaStr, scope).evaluate().text());
+                    const totalError = Math.sqrt(varianceSum);
+                    const percent = result !== 0 ? Math.abs((totalError / result) * 100) : 0;
+
+                    document.getElementById('finalValue').innerHTML = 
+                        `${result.toFixed(4)} <span style="font-size:0.6em; color:#8b949e">± ${totalError.toFixed(4)}</span>`;
+                    
+                    document.getElementById('finalMeta').innerText = 
+                        `Relative Uncertainty: ${percent.toFixed(2)}%`;
+                } else {
+                    document.getElementById('finalValue').innerText = "--";
+                    document.getElementById('finalMeta').innerText = "Enter values to calculate";
+                }
+
+            } catch (e) {
+                console.log("Calculation pending...");
+            }
+        }
+
+        function copyLatex() {
+            const math = document.getElementById('latexOutput').innerText; // MathJax usually puts the tex in assistive MML or similar
+            // Better way: reconstruct the string from logic or grab MathJax internal
+            // Simple fallback:
+            const tex = MathJax.startup.document.getMathItemsWithin(document.getElementById('latexOutput'))[0].math;
+            navigator.clipboard.writeText(tex).then(() => {
+                const btn = document.querySelector('.btn-icon');
+                const orig = btn.innerText;
+                btn.innerText = "Copied!";
+                setTimeout(() => btn.innerText = orig, 1500);
+            });
+        }
+    </script>
+</body>
+</html>

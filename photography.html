@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observations | Photography</title>
+    
+    <link rel="stylesheet" href="photography/photography.css">
+    <style>
+        /* Small inline style to highlight the current page link */
+        .nav-link.current-page {
+            border-bottom: 1px solid currentColor;
+            opacity: 1;
+        }
+        /* Ensure other links are slightly dimmed if not hovered */
+        .nav-link:not(.current-page) {
+            opacity: 0.7;
+        }
+        .nav-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grain"></div>
+
+    <nav>
+        <a href="index.html" class="logo">Sebastian Lüchow</a>
+        
+        <div class="nav-right">
+            <!-- Consistent Navigation Order -->
+            <a href="photography.html" class="nav-link current-page">OBSERVATIONS</a>
+            <a href="jazz.html" class="nav-link">WOODSHED</a>
+            <a href="physics.html" class="nav-link">THE LAB</a>
+            
+            <!-- Theme Toggle -->
+            <button id="theme-toggle" class="nav-link" style="margin-left: 20px;">LIGHT</button>
+        </div>
+    </nav>
+
+    <section class="intro">
+        <h1>Observations.</h1>
+    </section>
+
+    <section class="gallery">
+        <div class="photo-item layout-wide-left">
+            <img src="photography/sunflowers.jpeg" alt="sunflowers">
+            <div class="meta-data">
+                <span class="title">Sunflowers</span>
+                <span class="specs">ISO 200 &middot; 1/4000s &middot; f/2.2</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-tall-right">
+            <img src="photography/christianshavn.jpeg" alt="christianshavn">
+            <div class="meta-data">
+                <span class="title">Christianshavn</span>
+                <span class="specs">ISO 400 &middot; 1/2500s &middot; f/4</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-hero">
+            <img src="photography/by_nyhavn.jpeg" alt="by_nyhavn">
+            <div class="meta-data">
+                <span class="title">By Nyhavn</span>
+                <span class="specs">ISO 200 &middot; 1/4000s &middot; f/2.2</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-wide-left">
+            <img src="photography/lake_with_boat.jpeg" alt="lake_with_boat">
+            <div class="meta-data">
+                <span class="title">Lake with boat</span>
+                <span class="specs">ISO 200 &middot; 1/4000s &middot; f/3.5</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-tall-right">
+            <img src="photography/hamburg_architecture.jpeg" alt="hamburg_architecture">
+            <div class="meta-data">
+                <span class="title">Hamburg Architecture</span>
+                <span class="specs">ISO 400 &middot; 1/4000s &middot; f/4</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-duo-1">
+            <img src="photography/sleepy_kangaroo.jpeg" alt="sleepy_kangaroo">
+            <div class="meta-data">
+                <span class="title">Sleepy Kangaroo</span>
+                <span class="specs">ISO 800 &middot; 1/40s &middot; f/3.2</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-duo-2">
+            <img src="photography/curious_seal.jpeg" alt="Jazz">
+            <div class="meta-data">
+                <span class="title">Curious Seal</span>
+                <span class="specs">ISO 400 &middot; 1/400s &middot; f/3.5</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-hero">
+            <img src="photography/elbphilharmonie.jpeg" alt="elbphilharmonie">
+            <div class="meta-data">
+                <span class="title">Elbphilharmonie</span>
+                <span class="specs">ISO 400 &middot; 1/3200s &middot; f/4</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-duo-1">
+            <img src="photography/autumn_leaves.jpeg" alt="autumn_leaves">
+            <div class="meta-data">
+                <span class="title">Autumn Leaves No. 1</span>
+                <span class="specs">ISO 800 &middot; 1/250s &middot; f/4</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-duo-2">
+            <img src="photography/autumn_leaves_2.jpeg" alt="autumn_leaves_2">
+            <div class="meta-data">
+                <span class="title">Autumn Leaves No. 2</span>
+                <span class="specs">ISO 1600 &middot; 1/500s &middot; f/4.5</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-wide-left">
+            <img src="photography/structures.jpeg" alt="structures">
+            <div class="meta-data">
+                <span class="title">Structures</span>
+                <span class="specs">ISO 400 &middot; 1/1000s &middot; f/4</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-tall-right">
+            <img src="photography/wild_horse.jpeg" alt="wild_horse">
+            <div class="meta-data">
+                <span class="title">Wild Horse</span>
+                <span class="specs">ISO 1600 &middot; 1/800s &middot; f/3.2</span>
+            </div>
+        </div>
+
+        <div class="photo-item layout-hero">
+            <img src="photography/lunch.jpeg" alt="lunch">
+            <div class="meta-data">
+                <span class="title">Lunch</span>
+                <span class="specs">ISO 200 &middot; 1/320s &middot; f/2.5</span>
+            </div>
+        </div>
+
+    </section>
+
+    <script src="photography/photography.js"></script>
+
+</body>
+</html>

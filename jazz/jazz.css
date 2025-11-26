@@ -1,0 +1,381 @@
+/* =========================================
+   THE WOODSHED // JAZZ STYLES
+   ========================================= */
+
+:root {
+    /* DARK MODE (Default) */
+    --bg: #050505;
+    --text: #e0e0e0;
+    --dim: #444;
+    --accent: #cc3300; /* Burnt Orange */
+    --border: rgba(255, 255, 255, 0.1);
+    --nav-bg: rgba(14, 14, 14, 0.8);
+    --paper-bg: #1a1a1a; 
+    
+    /* New Variable for the big title gradient */
+    --gradient-text: linear-gradient(to right, #fff, #888);
+    
+    /* Hover color for tool names */
+    --hover-text: #fff;
+}
+
+/* LIGHT MODE (Sheet Music Paper Look) */
+body.light-mode {
+    --bg: #f4f1ea; /* Cream/Paper color */
+    --text: #1a1a1a; /* Ink black */
+    --dim: #666;
+    --accent: #d64515; /* Slightly brighter orange */
+    --border: rgba(0, 0, 0, 0.1);
+    --nav-bg: rgba(244, 241, 234, 0.9);
+    --paper-bg: #ffffff;
+
+    /* Gradient becomes dark grey to black */
+    --gradient-text: linear-gradient(to right, #000, #555);
+    
+    /* Hover text becomes black */
+    --hover-text: #000;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Cormorant Garamond', serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- DYNAMIC LIGHTING LAYER --- */
+.spotlight {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(
+        circle at var(--x, 50%) var(--y, 50%), 
+        rgba(255, 255, 255, 0.08) 0%, 
+        rgba(0, 0, 0, 0) 40%
+    );
+    transition: background 0.1s ease;
+}
+
+/* Subtle Grain Texture */
+.grain {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -2;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* --- NAV --- */
+nav {
+    padding: 40px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Removed mix-blend-mode as it breaks visibility on light backgrounds */
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    z-index: 100;
+    
+    /* Use the variable! */
+    background: var(--nav-bg);
+    backdrop-filter: blur(5px);
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    font-family: 'Syncopate', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    color: var(--text); /* Changed from #fff to var(--text) */
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.nav-right a {
+    font-family: 'DM Mono', monospace;
+    color: var(--text); /* Changed from #fff to var(--text) */
+    text-decoration: none;
+    font-size: 0.8rem;
+    margin-left: 40px;
+    opacity: 0.7;
+    transition: 0.3s;
+}
+.nav-right a:hover { opacity: 1; text-decoration: line-through; }
+
+/* --- HERO --- */
+header {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 60px;
+    position: relative;
+}
+
+h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8vw;
+    font-weight: 300;
+    line-height: 0.9;
+    font-style: italic;
+    margin-bottom: 30px;
+    
+    /* Use the variable gradient! */
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    max-width: 400px;
+    line-height: 1.6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-left: 1px solid var(--accent);
+    padding-left: 20px;
+}
+
+/* --- THE TOOLS (SETLIST) --- */
+.setlist-section {
+    margin-bottom: 100px;
+}
+
+.section-header {
+    padding: 0 60px;
+    margin-bottom: 40px;
+    font-family: 'Syncopate', sans-serif;
+    font-size: 0.8rem;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+}
+
+.tool-item {
+    display: block;
+    text-decoration: none;
+    padding: 50px 60px;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.freq-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0%;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.5s ease;
+}
+
+.tool-content {
+    display: grid;
+    grid-template-columns: 0.5fr 3fr 1fr;
+    align-items: baseline;
+    position: relative;
+    z-index: 2;
+}
+
+.tool-index {
+    font-family: 'Syncopate', sans-serif;
+    color: var(--dim);
+    font-size: 0.9rem;
+}
+
+.tool-name {
+    font-size: 4rem;
+    font-weight: 300;
+    color: var(--text);
+    transition: transform 0.4s ease;
+}
+
+.tool-meta {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    color: var(--dim);
+    font-size: 0.8rem;
+}
+
+/* Hover Effects */
+.tool-item:hover { background: rgba(255, 255, 255, 0.03); }
+.tool-item:hover .freq-line { width: 100%; }
+.tool-item:hover .tool-name { 
+    transform: translateX(20px); 
+    font-style: italic;
+    color: var(--hover-text); /* Changed from #fff to variable */
+}
+.tool-item:hover .tool-index { color: var(--accent); }
+
+/* --- MARQUEE SECTION --- */
+.marquee-section {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 80px 0;
+    background: var(--bg); /* Changed from hardcoded black */
+    overflow: hidden;
+    position: relative;
+}
+
+.marquee-label {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    z-index: 10;
+}
+
+.marquee-container {
+    display: flex;
+    width: fit-content;
+    animation: loop 20s linear infinite;
+}
+
+.marquee-text {
+    white-space: nowrap;
+    font-family: 'Syncopate', sans-serif;
+    font-weight: 700;
+    font-size: 6vw;
+    color: var(--bg); /* Outline matches background */
+    -webkit-text-stroke: 1px var(--dim);
+    margin-right: 50px;
+    opacity: 0.5;
+}
+
+@keyframes loop {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* --- FOOTER --- */
+footer {
+    padding: 60px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--dim);
+}
+
+@media (max-width: 768px) {
+    .tool-content { grid-template-columns: 1fr; gap: 10px; }
+    .tool-name { font-size: 2.5rem; }
+    .tool-meta { text-align: left; }
+    h1 { font-size: 15vw; }
+    nav { padding: 30px; }
+}
+
+/* =========================================
+   ARCHIVE / SHEET MUSIC STYLES
+   ========================================= */
+
+.archive-section {
+    margin-bottom: 100px;
+}
+
+.archive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    padding: 0 60px;
+}
+
+.sheet-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 350px;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+.sheet-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent);
+    transform: translateY(-5px);
+}
+
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+    margin-bottom: 30px;
+}
+
+.card-tag {
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 8px;
+    letter-spacing: 1px;
+}
+
+.card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 15px;
+    font-style: italic;
+    transition: color 0.3s;
+}
+
+.card-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--dim);
+    line-height: 1.5;
+}
+
+.card-footer {
+    margin-top: auto;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Syncopate', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text);
+}
+
+.arrow {
+    font-size: 1rem;
+    transition: transform 0.3s;
+}
+
+.sheet-card:hover .card-title { color: var(--hover-text); } /* Changed from #fff to variable */
+.sheet-card:hover .arrow { transform: translate(5px, -5px); color: var(--accent); }
+
+.sheet-card.placeholder {
+    opacity: 0.5;
+    pointer-events: none;
+    border-style: dashed;
+}
+
+@media (max-width: 768px) {
+    .archive-grid { padding: 0 20px; grid-template-columns: 1fr; }
+}

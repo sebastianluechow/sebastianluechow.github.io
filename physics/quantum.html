@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive | Quantum Well</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="physics.css">
+
+    <style>
+        /* --- CRITICAL FIX --- */
+        canvas#qmCanvas {
+            position: static;
+            width: 100%;
+            height: 100%;
+            opacity: 1;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        /* --- LAYOUT --- */
+        .qm-container {
+            display: grid;
+            grid-template-columns: 1fr 300px; /* Main Plot | Sidebar */
+            gap: 30px;
+            height: 600px;
+        }
+
+        .plot-window {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .qm-sidebar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .level-display {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .n-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6rem;
+            font-weight: bold;
+            color: var(--accent);
+            line-height: 1;
+            display: block;
+        }
+
+        .energy-val {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--dim);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        button.step-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex: 1;
+            transition: 0.2s;
+        }
+        button.step-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--hover-bg);
+        }
+
+        .legend {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--dim);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; }
+
+        @media (max-width: 900px) {
+            .qm-container { grid-template-columns: 1fr; height: auto; }
+            .plot-window { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <nav>
+        <a href="../index.html" class="logo">S<span>.</span>L<span>.</span></a>
+        <div class="nav-right">
+            <a href="../photography.html">OBSERVATIONS</a>
+            <a href="../jazz.html">WOODSHED</a>
+            <a href="../physics.html" class="nav-active">ARCHIVE</a>
+            
+            <button id="theme-toggle" style="background:none; border:none; color:var(--dim); font-family:inherit; cursor:pointer; margin-left:20px; font-size:0.85rem; transition:0.2s;">LIGHT</button>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Quantum Well</h1>
+        <p class="subtitle">
+            Visualization of the Infinite Potential Well. Solving the time-independent Schrödinger equation for energy eigenstates.
+        </p>
+    </header>
+
+    <div class="container">
+        
+        <div class="qm-container">
+            
+            <!-- LEFT: PLOT -->
+            <div class="plot-window">
+                <canvas id="qmCanvas"></canvas>
+            </div>
+
+            <!-- RIGHT: CONTROLS -->
+            <div class="qm-sidebar">
+                
+                <div class="level-display">
+                    <span style="color:var(--dim); font-size:0.8rem; letter-spacing:2px; text-transform:uppercase;">Quantum Number</span>
+                    <span class="n-number" id="nDisp">1</span>
+                    <span class="energy-val" id="eDisp">E = 1.00 E₀</span>
+                </div>
+
+                <div class="control-row" style="gap: 10px;">
+                    <button class="step-btn" onclick="changeN(-1)">-</button>
+                    <button class="step-btn" onclick="changeN(1)">+</button>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--accent);"></div>
+                        <span>Ψ(x) Wavefunction</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: #ff0055;"></div>
+                        <span>|Ψ(x)|² Probability</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:auto; font-size:0.7rem; color:var(--dim); line-height:1.5;">
+                    Equation: <br>
+                    Ψₙ(x) = √(2/L) sin(nπx/L) <br>
+                    Eₙ ∝ n²
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <footer>
+        [SYSTEM STATUS: QUANTIZED] &middot; © 2023 Sebastian Lüchow
+    </footer>
+
+    <script>
+        // --- THEME LOGIC ---
+        const themeBtn = document.getElementById('theme-toggle');
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            themeBtn.innerText = "DARK";
+        }
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeBtn.innerText = isLight ? "DARK" : "LIGHT";
+            draw(); // Redraw
+        });
+
+        // --- QM ENGINE ---
+        const canvas = document.getElementById('qmCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let n = 1; // Quantum Number
+        let width, height;
+
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            width = canvas.width;
+            height = canvas.height;
+            draw();
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100);
+
+        function changeN(delta) {
+            n = Math.max(1, Math.min(20, n + delta));
+            document.getElementById('nDisp').innerText = n;
+            document.getElementById('eDisp').innerText = `E = ${(n*n).toFixed(2)} E₀`;
+            draw();
+        }
+
+        function draw() {
+            // Colors
+            const isLight = document.body.classList.contains('light-mode');
+            const bg = isLight ? '#f8f9fa' : '#0a0a0a';
+            const axis = isLight ? '#ccc' : '#333';
+            const colorPsi = isLight ? '#008c9e' : '#00f3ff'; // Wavefunction
+            const colorProb = isLight ? 'rgba(214, 69, 21, 0.2)' : 'rgba(255, 0, 85, 0.2)'; // Probability Fill
+            const colorProbLine = isLight ? '#d64515' : '#ff0055'; // Probability Line
+
+            // Clear
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw Box Walls
+            const margin = 60;
+            const boxLeft = margin;
+            const boxRight = width - margin;
+            const baseline = height / 2;
+            
+            // Walls (Infinite Potential)
+            ctx.fillStyle = isLight ? '#eee' : '#111';
+            ctx.fillRect(0, 0, boxLeft, height);
+            ctx.fillRect(boxRight, 0, margin, height);
+            
+            // Axis Line
+            ctx.strokeStyle = axis;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(boxLeft, baseline);
+            ctx.lineTo(boxRight, baseline);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // --- PLOT MATH ---
+            const L = boxRight - boxLeft;
+            const amplitude = height * 0.4; 
+
+            // 1. Draw Probability Density |Psi|^2 (Filled Area)
+            ctx.fillStyle = colorProb;
+            ctx.beginPath();
+            ctx.moveTo(boxLeft, baseline);
+
+            for (let x = 0; x <= L; x++) {
+                // Psi = sin(n * pi * x / L)
+                // Prob = Psi^2 = sin^2(...)
+                const normX = x / L;
+                const psi = Math.sin(n * Math.PI * normX);
+                const prob = psi * psi;
+                
+                // We plot probability always UP from baseline
+                const plotY = baseline - (prob * amplitude); 
+                ctx.lineTo(boxLeft + x, plotY);
+            }
+            ctx.lineTo(boxRight, baseline);
+            ctx.fill();
+
+            // Outline for Probability
+            ctx.strokeStyle = colorProbLine;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 2. Draw Wavefunction Psi (Oscillating Line)
+            ctx.strokeStyle = colorPsi;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let x = 0; x <= L; x++) {
+                const normX = x / L;
+                const psi = Math.sin(n * Math.PI * normX);
+                
+                // Can be pos or neg
+                const plotY = baseline - (psi * amplitude);
+                
+                if (x === 0) ctx.moveTo(boxLeft + x, plotY);
+                else ctx.lineTo(boxLeft + x, plotY);
+            }
+            ctx.stroke();
+
+            // Draw Nodes (Zero Crossings)
+            ctx.fillStyle = isLight ? '#333' : '#fff';
+            for (let i = 0; i <= n; i++) {
+                const nodeX = boxLeft + (i / n) * L;
+                ctx.beginPath();
+                ctx.arc(nodeX, baseline, 3, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        // Init
+        draw();
+
+    </script>
+</body>
+</html>

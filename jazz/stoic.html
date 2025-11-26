@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jazz Challenge | Practice Generator</title>
+    
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Mono:wght@300;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050505;
+            --text: #e0e0e0;
+            --dim: #555;
+            --accent: #cc3300; /* Burnt Orange */
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- ATMOSPHERE --- */
+        .grain {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.06;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- NAV --- */
+        nav {
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .back-btn {
+            color: var(--dim);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .back-btn:hover { color: var(--accent); }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .label {
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--accent);
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+
+        .display-box {
+            border: 1px solid var(--border);
+            padding: 60px;
+            width: 100%;
+            max-width: 800px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.03), transparent 70%);
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        /* Corner Accents for the box */
+        .display-box::before, .display-box::after {
+            content: ''; position: absolute; width: 10px; height: 10px; border: 1px solid var(--accent); transition: 0.3s;
+        }
+        .display-box::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .display-box::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        #song-display {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 4rem;
+            font-style: italic;
+            line-height: 1;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        #task-display {
+            color: var(--dim);
+            font-size: 1.1rem;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .generate-btn {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--dim);
+            padding: 15px 40px;
+            font-family: 'DM Mono', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .generate-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 20px rgba(204, 51, 0, 0.2);
+        }
+
+        .history-log {
+            position: fixed;
+            bottom: 30px;
+            left: 60px;
+            font-size: 0.7rem;
+            color: var(--dim);
+            text-align: left;
+        }
+        .log-entry { display: block; margin-top: 5px; opacity: 0.6; }
+        .log-entry span { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            nav { padding: 30px; }
+            #song-display { font-size: 2.5rem; }
+            .display-box { padding: 30px; }
+            .history-log { display: none; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="grain"></div>
+
+    <nav>
+        <a href="jazz.html" class="logo">JAZZ CHALLENGE</a>
+        <a href="jazz.html" class="back-btn">← EXIT TO WOODSHED</a>
+    </nav>
+
+    <main>
+        <span class="label">Current Assignment</span>
+        
+        <div class="display-box">
+            <h1 id="song-display">Awaiting Input</h1>
+            <p id="task-display">System ready. Click generate to receive your practice parameters.</p>
+        </div>
+
+        <button class="generate-btn" id="genBtn">Generate Challenge</button>
+    </main>
+
+    <div class="history-log" id="historyLog">
+        <div>SESSION LOG:</div>
+        <!-- Entries go here -->
+    </div>
+
+    <script>
+        // --- DATA ---
+        const standards = [
+            "Autumn Leaves", "All The Things You Are", "Stella By Starlight",
+            "Blue Bossa", "Take The A Train", "So What", 
+            "Giant Steps", "On Green Dolphin Street", "Body and Soul",
+            "Donna Lee", "There Will Never Be Another You", "Oleo",
+            "Solar", "Confirmation", "My Funny Valentine"
+        ];
+
+        const keys = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "B", "E", "A", "D", "G"];
+
+        const constraints = [
+            "Original Key - 5/4 Time Signature",
+            "Original Key - Ballad Tempo ( < 60 BPM )",
+            "Random Key - Medium Swing",
+            "Original Key - Chord Tones Only (No Scales)",
+            "Original Key - Left Hand Voicings + Melody",
+            "Original Key - Transcribe 2 bars of a solo",
+            "Original Key - Root & 3rd Only",
+            "Random Key - Bossa Nova",
+            "Original Key - Play melody in 3 octaves",
+            "Random Key - Walking Bass + Melody",
+            "Original Key - Reharmonize with Diminished Chords"
+        ];
+
+        const btn = document.getElementById('genBtn');
+        const songDisplay = document.getElementById('song-display');
+        const taskDisplay = document.getElementById('task-display');
+        const historyLog = document.getElementById('historyLog');
+
+        btn.addEventListener('click', () => {
+            // 1. "Computing" Effect
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            let steps = 0;
+            
+            // Fast flicker effect before showing result
+            const interval = setInterval(() => {
+                songDisplay.innerText = standards[Math.floor(Math.random() * standards.length)];
+                songDisplay.style.opacity = "0.5";
+                steps++;
+
+                if (steps > 10) {
+                    clearInterval(interval);
+                    finalizeResult();
+                }
+            }, 50);
+        });
+
+        function finalizeResult() {
+            // 2. Logic
+            const song = standards[Math.floor(Math.random() * standards.length)];
+            let task = constraints[Math.floor(Math.random() * constraints.length)];
+
+            if (task.includes("Random Key")) {
+                const key = keys[Math.floor(Math.random() * keys.length)];
+                task = task.replace("Random Key", `Key: ${key}`);
+            }
+
+            // 3. Display
+            songDisplay.innerText = song;
+            songDisplay.style.opacity = "1";
+            taskDisplay.innerText = task;
+            taskDisplay.style.color = "#e0e0e0";
+
+            // 4. Log
+            addToLog(song, task);
+
+            // 5. Reset Button
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.innerText = "NEXT CHALLENGE";
+        }
+
+        function addToLog(song, task) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            // Get simplified task (remove "Original Key" text for shorter log)
+            const shortTask = task.replace("Original Key - ", "");
+            entry.innerHTML = `> ${song} <span>// ${shortTask}</span>`;
+            
+            // Insert after title
+            historyLog.insertBefore(entry, historyLog.children[1]);
+            
+            // Keep log short
+            if (historyLog.children.length > 6) {
+                historyLog.removeChild(historyLog.lastChild);
+            }
+        }
+    </script>
+
+</body>
+</html>

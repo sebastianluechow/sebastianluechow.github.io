@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The LAB | Physics</title>
+    
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="physics/physics.css">
+
+    <style>
+        /* Styling for the "Coming Soon" list items */
+        .file-row.placeholder {
+            opacity: 0.5;
+            cursor: default;
+            border-bottom: 1px dashed var(--border);
+        }
+        .file-row.placeholder:hover {
+            background: transparent;
+            padding-left: 20px;
+            color: var(--text);
+        }
+        .file-row.placeholder .dl-arrow {
+            opacity: 1;
+            color: var(--dim);
+        }
+
+        /* --- NEW: Styling for "Coming Soon" Tool Cards --- */
+        .tool-card.coming-soon {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        /* Disable hover effects for coming soon cards */
+        .tool-card.coming-soon:hover {
+            transform: none;
+            border-color: var(--border);
+            box-shadow: none;
+        }
+        .tool-card.coming-soon h3 {
+            color: var(--dim);
+        }
+        .tool-card.coming-soon .tool-icon {
+            color: var(--dim);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- VISUALS -->
+    <div class="grid-bg"></div>
+    <canvas id="waveCanvas"></canvas>
+
+    <nav>
+        <a href="index.html" class="logo">S<span>.</span>L<span>.</span></a>
+        <div class="nav-right">
+            <a href="photography.html">OBSERVATIONS</a>
+            <a href="jazz.html">WOODSHED</a>
+            <a href="physics.html" class="nav-active">THE LAB</a>
+            
+            <!-- THEME TOGGLE -->
+            <button id="theme-toggle">LIGHT</button>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Physics Tools</h1>
+        <p class="subtitle">
+            Repository of lecture notes, exam cheatsheets, and numerical tools for the working student.
+            <br><br>
+            Status: <span style="color:var(--accent)">Online</span>
+        </p>
+    </header>
+
+    <div class="container">
+
+        <!-- SECTION 01: TOOLS -->
+        <div class="section-header">
+            <span class="section-num">01</span>
+            <div class="section-line"></div>
+            <span class="section-title">Active Tools</span>
+        </div>
+
+        <div class="tools-grid">
+            
+            <a href="physics/error_calc.html" class="tool-card">
+                <span class="tool-icon">./error_propagation.exe</span>
+                <h3>Error Propagator</h3>
+                <p>
+                    Automated Gaussian error propagation using symbolic differentiation. Includes LaTeX formula export.
+                </p>
+            </a>
+            
+             <!-- Link to Fit Master -->
+            <a href="physics/fitter.html" class="tool-card">
+                <span class="tool-icon">./linear_fitting.exe</span>
+                <h3>Fit Master</h3>
+                <p>
+                    Linear Regression with visual plotting, parameter errors (sigma), and LaTeX export.
+                </p>
+            </a>
+
+            <a href="physics/chaos.html" class="tool-card">
+                <span class="tool-icon">./double_pendulum.exe</span>
+                <h3>Double Pendulum</h3>
+                <p>
+                    Interactive Double Pendulum simulation solving Lagrangian equations of motion.
+                </p>
+            </a>
+
+            <a href="physics/fourier.html" class="tool-card">
+                <span class="tool-icon">./fft_analysis.exe</span>
+                <h3>Fourier Analysis</h3>
+                <p>
+                    Real-time Discrete Fourier Transform. Draw signals to visualize their harmonic spectrum.
+                </p>
+            </a>
+
+            <a href="physics/quantum.html" class="tool-card">
+                <span class="tool-icon">./schrodinger.py</span>
+                <h3>Quantum Well</h3>
+                <p>
+                    Particle in a box visualization. Probability densities and energy levels for 1D quantum systems.
+                </p>
+            </a>
+
+            <!-- COMING SOON: ORBITAL SANDBOX -->
+            <div class="tool-card coming-soon">
+                <span class="tool-icon">./n_body_sim.exe [LOCKED]</span>
+                <h3>Orbital Sandbox</h3>
+                <p>
+                    Interactive N-Body Gravity simulator. <br>
+                </p>
+            </div>
+
+            <!-- COMING SOON: DISTRIBUTION LAB -->
+            <div class="tool-card coming-soon">
+                <span class="tool-icon">./dist_lab.exe [LOCKED]</span>
+                <h3>Distribution Lab</h3>
+                <p>
+                    Statistical playground. Compare Binomial, Poisson, and Gaussian distributions.
+                </p>
+            </div>
+
+
+        </div>
+
+        <div class="section-header">
+            <span class="section-num">02</span>
+            <div class="section-line"></div>
+            <span class="section-title">Cheatsheets</span>
+        </div>
+
+        <div class="file-list">
+            <a href="physics/theo1_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Theoretische Physik I</span>
+            <span class="file-tag">Semester 1</span>
+            <span class="file-size">4.3 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/theo2_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Theoretische Physik II</span>
+            <span class="file-tag">Semester 2</span>
+            <span class="file-size">5.2 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/theo3_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Theoretische Physik III</span>
+            <span class="file-tag">Semester 3</span>
+            <span class="file-size">4.7 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/ex1_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Experimentalphysik I</span>
+            <span class="file-tag">Semester 1</span>
+            <span class="file-size">3.9 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/ex2_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Experimentalphysik II</span>
+            <span class="file-tag">Semester 2</span>
+            <span class="file-size">4.6 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/ex3_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Experimentalphysik III</span>
+            <span class="file-tag">Semester 3</span>
+            <span class="file-size">6.1 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        <a href="physics/ex4_cheatsheet.pdf" class="file-row">
+            <span class="file-icon">PDF</span>
+            <span class="file-name">Experimentalphysik IV</span>
+            <span class="file-tag">Semester 4</span>
+            <span class="file-size">9.1 MB</span>
+            <span class="dl-arrow">↓</span>
+        </a>
+
+        </div>
+
+        <!-- SECTION 03: COMING SOON -->
+        <div class="section-header">
+            <span class="section-num">03</span>
+            <div class="section-line"></div>
+            <span class="section-title">Lecture Notes (Incoming)</span>
+        </div>
+
+        <div class="file-list">
+            
+            <!-- Placeholder Items (Unclickable divs instead of 'a' tags) -->
+            <div class="file-row placeholder">
+                <span class="file-icon">WIP</span>
+                <span class="file-name">Applied Statistics</span>
+                <span class="file-tag">Drafting</span>
+                <span class="file-size">--</span>
+                <span class="dl-arrow">🔒</span>
+            </div>
+
+            <div class="file-row placeholder">
+                <span class="file-icon">WIP</span>
+                <span class="file-name">Electrodynamics</span>
+                <span class="file-tag">Drafting</span>
+                <span class="file-size">--</span>
+                <span class="dl-arrow">🔒</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <footer>
+        [SYSTEM STATUS: OPTIMAL] &middot; © 2025 Sebastian Lüchow &middot;
+    </footer>
+
+    <script src="physics/physics.js"></script>
+
+</body>
+</html>

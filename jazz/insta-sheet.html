@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Insta-Sheet // Visual Only</title>
+    
+    <!-- Nur die Basis-Bibliothek für Rendering (Kein Audio-Schnickschnack) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
+
+    <style>
+        :root {
+            --bg: #1e1e1e;
+            --editor-bg: #252526;
+            --paper: #ffffff; 
+            --accent: #00ff9d;
+            --text: #ccc;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 15px 20px;
+            background: #111;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: white; }
+        
+        button {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        button:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* --- LAYOUT --- */
+        .workspace {
+            display: flex;
+            flex: 1;
+            height: 100%;
+        }
+
+        /* LINKER BEREICH (EDITOR) */
+        .editor-pane {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+        }
+
+        textarea {
+            flex: 1;
+            background: var(--editor-bg);
+            color: #e0e0e0; 
+            border: none;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .cheatsheet {
+            background: #111;
+            padding: 15px;
+            font-size: 0.8rem;
+            color: #888;
+            border-top: 1px solid #333;
+            line-height: 1.8;
+        }
+        code { 
+            color: var(--accent); 
+            background: rgba(255,255,255,0.05); 
+            padding: 2px 5px; 
+            border-radius: 3px; 
+            font-family: monospace; 
+        }
+
+        /* RECHTER BEREICH (PAPIER) */
+        .preview-pane {
+            width: 60%;
+            background: #555; /* Dunkler Hintergrund um das Papier herum */
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        #paper {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: black; /* Noten müssen schwarz sein */
+        }
+        
+        /* Damit die SVG scharf bleibt */
+        #paper svg {
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>INSTA-SHEET <span style="font-size:0.6em; color:var(--accent);"></span></h1>
+        <button onclick="downloadSVG()">Download SVG</button>
+    </header>
+
+    <div class="workspace">
+        <div class="editor-pane">
+<!-- Hier schreibst du deinen Code -->
+<textarea id="abc-source" spellcheck="false">
+X: 1
+T: Jazz Practice
+C: Dein Name
+M: 4/4
+L: 1/8
+K: C
+"Dm7" D F A c "G7" B A G F | "Cmaj7" E G B d c4 |
+"Fmaj7" F A c e "Bm7b5" d c B A | "E7alt" ^G B d f "Am7" e4 |]
+</textarea>
+            
+            <div class="cheatsheet">
+                <b>Syntax Hilfe:</b><br>
+                Note Hoch: <code>c d e</code> | Note Tief: <code>C D E</code><br>
+                Vorzeichen: <code>^C</code> (Kreuz) | <code>_B</code> (b) | <code>=A</code> (Natural)<br>
+                Länge: <code>c2</code> (Viertel) | <code>c4</code> (Halbe) | <code>c/2</code> (16tel)<br>
+                Akkord: <code>"Cm7"</code> | Pause: <code>z</code>
+            </div>
+        </div>
+
+        <div class="preview-pane">
+            <div id="paper"></div>
+        </div>
+    </div>
+
+    <script>
+        const textarea = document.getElementById('abc-source');
+
+        function render() {
+            const abcString = textarea.value;
+            
+            // Das ist die einzige Funktion, die wir brauchen.
+            // Sie nimmt den Text und malt ihn in das div mit der ID "paper"
+            ABCJS.renderAbc("paper", abcString, { 
+                responsive: "resize", // Passt sich der Breite an
+                add_classes: true     // Hilft beim Styling
+            });
+        }
+
+        // Live-Update beim Tippen
+        textarea.addEventListener("input", render);
+
+        // Einmal beim Start ausführen
+        render();
+
+        // SVG Download Funktion
+        function downloadSVG() {
+            const svg = document.querySelector('#paper svg');
+            if(!svg) return;
+            
+            // Standard XML Header für Illustrator/Inkscape hinzufügen
+            svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "notenblatt.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

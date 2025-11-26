@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive | Fourier Playground</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Link to main Physics styles -->
+    <link rel="stylesheet" href="physics.css">
+
+    <style>
+        /* --- CRITICAL FIX: Override Global Canvas Background Styles --- */
+        canvas#timeCanvas, canvas#freqCanvas {
+            position: static; /* Puts them back inside the box */
+            width: 100%;
+            height: 100%;
+            opacity: 1; /* Full visibility */
+            z-index: 1;
+            pointer-events: auto; /* Allow drawing */
+        }
+
+        /* --- LAYOUT --- */
+        .fourier-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 500px;
+        }
+
+        /* CANVAS WRAPPERS */
+        .scope-window {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .scope-header {
+            padding: 10px 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--dim);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* CONTROLS AREA */
+        .controls-bar {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .wave-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 4px;
+        }
+
+        .wave-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--hover-bg);
+        }
+
+        .hint {
+            text-align: center;
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--dim);
+        }
+
+        @media (max-width: 900px) {
+            .fourier-container { grid-template-columns: 1fr; height: auto; }
+            .scope-window { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <nav>
+        <a href="../index.html" class="logo">S<span>.</span>L<span>.</span></a>
+        <div class="nav-right">
+            <a href="../photography.html">OBSERVATIONS</a>
+            <a href="../jazz.html">WOODSHED</a>
+            <a href="../physics.html" class="nav-active">ARCHIVE</a>
+            
+            <button id="theme-toggle" style="background:none; border:none; color:var(--dim); font-family:inherit; cursor:pointer; margin-left:20px; font-size:0.85rem; transition:0.2s;">LIGHT</button>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Fourier Playground</h1>
+        <p class="subtitle">
+            Real-time Discrete Fourier Transform (DFT). Draw a waveform in the time domain to visualize its harmonic content in the frequency domain.
+        </p>
+    </header>
+
+    <div class="container">
+        
+        <div class="fourier-container">
+            
+            <!-- LEFT: TIME DOMAIN -->
+            <div class="scope-window">
+                <div class="scope-header">
+                    <span>TIME DOMAIN f(t)</span>
+                    <span style="color:var(--accent)">INPUT</span>
+                </div>
+                <canvas id="timeCanvas"></canvas>
+            </div>
+
+            <!-- RIGHT: FREQUENCY DOMAIN -->
+            <div class="scope-window">
+                <div class="scope-header">
+                    <span>FREQUENCY DOMAIN F(ω)</span>
+                    <span>OUTPUT</span>
+                </div>
+                <canvas id="freqCanvas"></canvas>
+            </div>
+
+        </div>
+
+        <div class="controls-bar">
+            <button class="wave-btn" onclick="generateWave('sine')">SINE</button>
+            <button class="wave-btn" onclick="generateWave('square')">SQUARE</button>
+            <button class="wave-btn" onclick="generateWave('saw')">SAWTOOTH</button>
+            <button class="wave-btn" onclick="generateWave('noise')">NOISE</button>
+            <button class="wave-btn" onclick="generateWave('flat')">CLEAR</button>
+        </div>
+        
+        <div class="hint">TIP: Draw directly on the left screen to create custom waves.</div>
+
+    </div>
+
+    <footer>
+        [SYSTEM STATUS: OPTIMAL] &middot; © 2023 Sebastian Lüchow
+    </footer>
+
+    <script>
+        // --- THEME LOGIC ---
+        const themeBtn = document.getElementById('theme-toggle');
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            themeBtn.innerText = "DARK";
+        }
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeBtn.innerText = isLight ? "DARK" : "LIGHT";
+            draw(); // Redraw to update colors
+        });
+
+        // --- FOURIER ENGINE ---
+        const timeCanvas = document.getElementById('timeCanvas');
+        const freqCanvas = document.getElementById('freqCanvas');
+        const timeCtx = timeCanvas.getContext('2d');
+        const freqCtx = freqCanvas.getContext('2d');
+
+        // Config
+        const N = 512; // Number of samples
+        let samples = new Array(N).fill(0);
+        let isDrawing = false;
+
+        // Initialization
+        function init() {
+            // Initial resize logic
+            resize();
+            // Initial Wave
+            generateWave('sine');
+            // Listen for window resize
+            window.addEventListener('resize', resize);
+        }
+
+        function resize() {
+            // Resize buffers to match container size
+            [timeCanvas, freqCanvas].forEach(c => {
+                // Force recalculation of display size
+                const rect = c.parentElement.getBoundingClientRect();
+                // Subtract header height approx (30-40px)
+                c.width = rect.width;
+                c.height = rect.height - 40; 
+            });
+            draw();
+        }
+
+        // --- SIGNAL GENERATION ---
+        function generateWave(type) {
+            for (let i = 0; i < N; i++) {
+                const t = (i / N) * Math.PI * 2; // One full cycle (2pi)
+                
+                if (type === 'sine') {
+                    samples[i] = Math.sin(t * 2); // 2 cycles
+                } else if (type === 'square') {
+                    samples[i] = Math.sin(t * 2) > 0 ? 0.8 : -0.8;
+                } else if (type === 'saw') {
+                    samples[i] = ((i % (N/2)) / (N/2)) * 2 - 1;
+                } else if (type === 'noise') {
+                    samples[i] = (Math.random() * 2 - 1) * 0.5;
+                } else {
+                    samples[i] = 0;
+                }
+            }
+            draw();
+        }
+
+        // --- MATH: DISCRETE FOURIER TRANSFORM (DFT) ---
+        // We calculate this manually to show the physics
+        function calculateDFT(input) {
+            const output = [];
+            const K = N / 2; // Max frequency (Nyquist)
+
+            for (let k = 0; k < K; k++) {
+                let sumReal = 0;
+                let sumImag = 0;
+
+                for (let n = 0; n < N; n++) {
+                    const angle = (2 * Math.PI * k * n) / N;
+                    sumReal += input[n] * Math.cos(angle);
+                    sumImag -= input[n] * Math.sin(angle);
+                }
+
+                const magnitude = Math.sqrt(sumReal * sumReal + sumImag * sumImag);
+                // Normalize roughly
+                output.push(magnitude / (N/4)); 
+            }
+            return output;
+        }
+
+        // --- RENDERING ---
+        function draw() {
+            const isLight = document.body.classList.contains('light-mode');
+            
+            // Colors
+            const bg = isLight ? '#f8f9fa' : '#0a0a0a';
+            const grid = isLight ? '#ddd' : '#222';
+            const lineTime = isLight ? '#008c9e' : '#00f3ff'; // Cyan/Teal
+            const lineFreq = isLight ? '#d64515' : '#ff0055'; // Orange/Pink
+
+            // 1. Draw Time Domain
+            timeCtx.fillStyle = bg;
+            timeCtx.fillRect(0, 0, timeCanvas.width, timeCanvas.height);
+            
+            // Zero line
+            timeCtx.strokeStyle = grid;
+            timeCtx.beginPath();
+            timeCtx.moveTo(0, timeCanvas.height/2);
+            timeCtx.lineTo(timeCanvas.width, timeCanvas.height/2);
+            timeCtx.stroke();
+
+            // Waveform
+            timeCtx.strokeStyle = lineTime;
+            timeCtx.lineWidth = 2;
+            timeCtx.beginPath();
+            
+            const stepX = timeCanvas.width / N;
+            const ampY = timeCanvas.height / 2;
+            const centerY = timeCanvas.height / 2;
+
+            for (let i = 0; i < N; i++) {
+                const x = i * stepX;
+                const y = centerY - (samples[i] * ampY * 0.8); // 0.8 margin
+                if (i===0) timeCtx.moveTo(x, y);
+                else timeCtx.lineTo(x, y);
+            }
+            timeCtx.stroke();
+
+            // 2. Calculate FFT
+            const spectrum = calculateDFT(samples);
+
+            // 3. Draw Frequency Domain
+            freqCtx.fillStyle = bg;
+            freqCtx.fillRect(0, 0, freqCanvas.width, freqCanvas.height);
+
+            const barWidth = freqCanvas.width / spectrum.length;
+            
+            freqCtx.fillStyle = lineFreq;
+            for (let i = 0; i < spectrum.length; i++) {
+                // Ignore DC offset (i=0) usually large
+                if (i === 0) continue;
+
+                const h = spectrum[i] * freqCanvas.height * 0.8;
+                const x = i * barWidth;
+                const y = freqCanvas.height - h;
+                
+                freqCtx.fillRect(x, y, barWidth + 1, h);
+            }
+        }
+
+        // --- INTERACTION (DRAWING) ---
+        function handleDraw(e) {
+            const rect = timeCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Map X to sample index
+            const index = Math.floor((x / timeCanvas.width) * N);
+            
+            // Map Y to amplitude (-1 to 1)
+            const amp = -((y / timeCanvas.height) * 2 - 1) / 0.8; // Inverse of draw logic
+
+            if (index >= 0 && index < N) {
+                // Brush size (update neighbors for smoothness)
+                const radius = 5;
+                for(let i = -radius; i <= radius; i++) {
+                    if (index+i >= 0 && index+i < N) {
+                        samples[index+i] = amp;
+                    }
+                }
+                draw();
+            }
+        }
+
+        timeCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            handleDraw(e);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (isDrawing && e.target === timeCanvas) {
+                handleDraw(e);
+            }
+        });
+        window.addEventListener('mouseup', () => isDrawing = false);
+
+        // Boot
+        init();
+
+    </script>
+</body>
+</html>
